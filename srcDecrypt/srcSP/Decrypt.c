@@ -3,6 +3,23 @@
 char DefaultCharset[] = "abcdefghilmnopqrstuvzABCDEFGHILMNOPQRSTUVZ0123456789./";
 int StartSeconds;
 
+int StringToInt(char *String)
+{
+    char *EndPtr;    
+    long Value;
+    
+    Value = strtol(String, &EndPtr, 10);
+    
+    if( errno == ERANGE && Value == LONG_MIN ) {
+        printf("StringToInt %s (%lu) invalid...underflow occurred\n",String,Value);
+        return 0;
+    } else if( errno == ERANGE && Value == LONG_MAX ) {
+        printf("StringToInt %s (%lu) invalid...overflow occurred\n",String,Value);
+        return 0;
+    }
+    return Value;
+}
+
 void DPrintf(char *Fmt, ...)
 {
     char Temp[1000];
@@ -122,6 +139,8 @@ void Decrypt(DecypherSettings_t *DecypherSettings)
     End = Sys_Milliseconds();
     if( Found ) {
         printf("Password %s took %i msec to be cracked\n",DecypherSettings->EncryptedPassword,End-Start);
+    } else {
+        printf("Password %s could not be decrypted.\n",DecypherSettings->EncryptedPassword);
     }
 }
 
@@ -160,14 +179,32 @@ void DecypherSettingsCleanUp(DecypherSettings_t *DecypherSettings)
 int main(int argc,char** argv)
 {
     DecypherSettings_t *DecypherSettings;
+    char *Charset;
+    int LocalMaxLength;
+    int i;
     
     if( argc < 3 ) {
-        printf("Usage:%s <EncryptedPassword> <MaxLength> <Optional Charset>\n",argv[0]);
+        printf("Usage:%s <EncryptedPassword> <MaxLength> <Optional --Charset>\n",argv[0]);
         return -1;
+    }
+    LocalMaxLength = StringToInt(argv[2]);
+    if( LocalMaxLength == 0 ) {
+        printf("Invalid Max Length.\n");
+        return -1;
+    }
+    Charset = NULL;
+    for( i = 3; i < argc; i++ ) {
+        if(!strcasecmp(argv[i],"--Charset") || !strcasecmp(argv[i],"-Charset") ) {
+            if( argv[i+1] != NULL ) {
+                Charset = StringCopy(argv[i+1]);
+            } else {
+                printf("Charset sets without a value...ignored\n");                
+            }
+        }
     }
     assert(strlen(argv[1]) > 2);
     DPrintf("Running Decrypt on %s, Max Length is %s\n",argv[1],argv[2]);
-    DecypherSettings = DecypherSettingsInit(argv[1],atoi(argv[2]),argv[3]);
+    DecypherSettings = DecypherSettingsInit(argv[1],StringToInt(argv[2]),Charset);
     Decrypt(DecypherSettings);
     DecypherSettingsCleanUp(DecypherSettings);
 }

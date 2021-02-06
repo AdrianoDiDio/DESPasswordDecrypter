@@ -72,7 +72,7 @@ void *PoolGetAvailableJob(PoolJob_t *Pool)
     Pool->GlobalWorkStatus.CurrentPositionValue = Pool->GlobalWorkStatus.CharsetIterator * 
         Pool->Settings.CharsetIncrement;
     Pool->GlobalWorkStatus.TargetPositionValue = ((Pool->GlobalWorkStatus.CharsetIterator + 1) 
-        * Pool->Settings.CharsetIncrement) - 1;
+        * Pool->Settings.CharsetIncrement);
     //Clamp it if we have gone out of bounds...
     if( Pool->GlobalWorkStatus.TargetPositionValue > RealCharsetSize ) {
         Pool->GlobalWorkStatus.TargetPositionValue = RealCharsetSize;

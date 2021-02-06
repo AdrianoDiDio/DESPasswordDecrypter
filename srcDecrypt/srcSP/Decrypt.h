@@ -3,6 +3,8 @@
 #include <string.h>
 #include <stdarg.h>
 #include <assert.h>
+#include <limits.h>
+#include <errno.h>
 #include <crypt.h>
 #include <sys/time.h>
 

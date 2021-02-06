@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
+#include <limits.h>
 #include <sys/types.h>
 #include <unistd.h>
 #include <sys/syscall.h>
@@ -65,6 +67,23 @@ int Sys_Milliseconds()
     return CTime;
 }
 
+int StringToInt(char *String)
+{
+    char *EndPtr;    
+    long Value;
+    
+    Value = strtol(String, &EndPtr, 10);
+    
+    if( errno == ERANGE && Value == LONG_MIN ) {
+        printf("StringToInt %s (%lu) invalid...underflow occurred\n",String,Value);
+        return 0;
+    } else if( errno == ERANGE && Value == LONG_MAX ) {
+        printf("StringToInt %s (%lu) invalid...overflow occurred\n",String,Value);
+        return 0;
+    }
+    return Value;
+}
+
 char *StringCopy(const char *From)
 {
     char *Dest;
@@ -119,7 +138,7 @@ void *PoolGetAvailableJob(PoolJob_t *Pool)
     Pool->GlobalWorkStatus.CurrentPositionValue = Pool->GlobalWorkStatus.CharsetIterator * 
         Pool->Settings.CharsetIncrement;
     Pool->GlobalWorkStatus.TargetPositionValue = ((Pool->GlobalWorkStatus.CharsetIterator + 1) 
-        * Pool->Settings.CharsetIncrement) - 1;
+        * Pool->Settings.CharsetIncrement);
     //Clamp it if we have gone out of bounds...
     if( Pool->GlobalWorkStatus.TargetPositionValue > RealCharsetSize ) {
         Pool->GlobalWorkStatus.TargetPositionValue = RealCharsetSize;
@@ -256,23 +275,47 @@ int main(int argc,char** argv)
     int End;
     DecipherSettings_t StaticDecipherSettings;
     PoolWork_t StaticGlobalWorkStatus;
+    int LocalThreadPoolSize;
+    int LocalMaxLength;
     
     if( argc < 3 ) {
-        printf("Usage:%s <EncryptedPassword> <MaxLength> <Optional Number of Worker Threads> <Optional Charset>\n",argv[0]);
+        printf("Usage:%s <EncryptedPassword> <MaxLength> <Optional --NumThreads> <Optional --Charset>\n",argv[0]);
         return -1;
     }
     
+    LocalMaxLength = StringToInt(argv[2]);
+    if( LocalMaxLength == 0 ) {
+        printf("Invalid Max Length.\n");
+        return -1;
+    }
+    
+    LocalThreadPoolSize = -1;
+    StaticDecipherSettings.Charset = NULL;
+    for( i = 3; i < argc; i++ ) {
+        if(!strcasecmp(argv[i],"--NumThreads") || !strcasecmp(argv[i],"-NumThreads") ) {
+            if( argv[i+1] != NULL ) {
+                LocalThreadPoolSize = StringToInt(argv[i+1]);
+            } else {
+                printf("NumThreads sets without a value...ignored\n");
+            }
+        }
+        if(!strcasecmp(argv[i],"--Charset") || !strcasecmp(argv[i],"-Charset") ) {
+            if( argv[i+1] != NULL ) {
+                StaticDecipherSettings.Charset = StringCopy(argv[i+1]);
+            } else {
+                printf("Charset sets without a value...ignored\n");                
+            }
+        }
+    }
     StaticDecipherSettings.EncryptedPassword = StringCopy(argv[1]);
     StaticDecipherSettings.Salt[0] = argv[1][0];
     StaticDecipherSettings.Salt[1] = argv[1][1];
     StaticDecipherSettings.Salt[2] = '\0';
-    if( argc > 3 && argv[4] != NULL ) {
-        StaticDecipherSettings.Charset = StringCopy(argv[4]);
-    } else {
+    if( StaticDecipherSettings.Charset == NULL ) {
         StaticDecipherSettings.Charset = StringCopy("abcdefghilmnopqrstuvzABCDEFGHILMNOPQRSTUVZ0123456789./");
     }
     StaticDecipherSettings.CharsetSize = strlen(StaticDecipherSettings.Charset);
-    StaticDecipherSettings.MaxLength = atoi(argv[2]);
+    StaticDecipherSettings.MaxLength = StringToInt(argv[2]);
     StaticDecipherSettings.CharsetIncrement = 2;
     printf("Init with charset size:%i\n", StaticDecipherSettings.CharsetSize);
     PoolJob.Settings = StaticDecipherSettings;
@@ -287,10 +330,10 @@ int main(int argc,char** argv)
     PoolJob.JobStatus = DECRYPTER_JOB_STATUS_NOT_COMPLETED;
     PoolJob.DecryptedPassword = NULL;
     
-    if( argc > 3 && argv[3] != NULL ) {
-        PoolJob.ThreadPoolSize = atoi(argv[3]);
-    } else {
+    if( LocalThreadPoolSize == -1 ) {
         PoolJob.ThreadPoolSize = 4;
+    } else {
+        PoolJob.ThreadPoolSize = LocalThreadPoolSize;
     }
     
     Start = Sys_Milliseconds();

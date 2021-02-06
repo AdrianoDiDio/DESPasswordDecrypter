@@ -217,7 +217,8 @@ int main(int argc,char** argv)
     if( argv[3] != NULL ) {
         StaticDecipherSettings.Charset = StringCopy(argv[3]);
     } else {
-        StaticDecipherSettings.Charset = StringCopy("abcdefghilmnopqrstuvzABCDEFGHILMNOPQRSTUVZ0123456789./");
+        StaticDecipherSettings.Charset = StringCopy("abcdefghilmnopqrstuvzABCDEFGHILMNOP \
+            QRSTUVZ0123456789./");
     }
     StaticDecipherSettings.CharsetSize = strlen(StaticDecipherSettings.Charset);
     StaticDecipherSettings.MaxLength = atoi(argv[2]);

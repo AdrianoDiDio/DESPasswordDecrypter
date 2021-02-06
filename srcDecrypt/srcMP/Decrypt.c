@@ -261,14 +261,13 @@ int main(int argc,char** argv)
         printf("Usage:%s <EncryptedPassword> <MaxLength> <Optional Number of Worker Threads> <Optional Charset>\n",argv[0]);
         return -1;
     }
-
     
     StaticDecipherSettings.EncryptedPassword = StringCopy(argv[1]);
     StaticDecipherSettings.Salt[0] = argv[1][0];
     StaticDecipherSettings.Salt[1] = argv[1][1];
     StaticDecipherSettings.Salt[2] = '\0';
-    if( argv[4] != NULL ) {
-        StaticDecipherSettings.Charset = StringCopy(argv[3]);
+    if( argc > 3 && argv[4] != NULL ) {
+        StaticDecipherSettings.Charset = StringCopy(argv[4]);
     } else {
         StaticDecipherSettings.Charset = StringCopy("abcdefghilmnopqrstuvzABCDEFGHILMNOPQRSTUVZ0123456789./");
     }
@@ -288,7 +287,7 @@ int main(int argc,char** argv)
     PoolJob.JobStatus = DECRYPTER_JOB_STATUS_NOT_COMPLETED;
     PoolJob.DecryptedPassword = NULL;
     
-    if( argv[3] != NULL ) {
+    if( argc > 3 && argv[3] != NULL ) {
         PoolJob.ThreadPoolSize = atoi(argv[3]);
     } else {
         PoolJob.ThreadPoolSize = 4;

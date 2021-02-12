@@ -124,8 +124,8 @@ void Decrypt(DecypherSettings_t *DecypherSettings)
     int End;
     int Found;
 
-    DPrintf("Decrypting %s with a MaxLength of %i chars using Salt:%s\n",DecypherSettings->EncryptedPassword,DecypherSettings->MaxLength,
-           DecypherSettings->Salt);
+    DPrintf("Decrypting %s with a MaxLength of %i chars using Salt:%s\n",DecypherSettings->EncryptedPassword,
+            DecypherSettings->MaxLength,DecypherSettings->Salt);
     DPrintf("Alphabet has %i chars to try.\n",DecypherSettings->CharsetSize);
     Start = Sys_Milliseconds();
     Found = 0;
@@ -138,7 +138,7 @@ void Decrypt(DecypherSettings_t *DecypherSettings)
     }
     End = Sys_Milliseconds();
     if( Found ) {
-        printf("Password %s took %i msec to be cracked\n",DecypherSettings->EncryptedPassword,End-Start);
+        printf("Password %s took %i ms to be cracked\n",DecypherSettings->EncryptedPassword,End-Start);
     } else {
         printf("Password %s could not be decrypted.\n",DecypherSettings->EncryptedPassword);
     }

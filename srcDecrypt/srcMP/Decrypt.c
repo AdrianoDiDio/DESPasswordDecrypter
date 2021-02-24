@@ -35,9 +35,6 @@ typedef struct PoolWork_s {
 } PoolWork_t;
 
 typedef struct PoolJob_s {
-//     int StartChar;
-//     int TargetChar;
-//     int Length;
     PoolWork_t GlobalWorkStatus;
     pthread_t *ThreadPool;
     DecipherSettings_t Settings;
